@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avtaler &amp; frister — Dramafag</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0d0c;--bg2:#151412;--bg3:#1c1a18;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8e4dc;--text2:#9a9590;--text3:#5a5650;
+  --accent:#c8b89a;
+  --font-d:'Fraunces',Georgia,serif;
+  --font-m:'DM Mono',monospace;
+  --stage-line1:rgba(255,255,255,0.04);
+  --stage-line3:rgba(200,184,154,0.15);
+  --stage-line7:rgba(255,255,255,0.06);
+}
+body.light {
+  --bg:#f5f2ed;--bg2:#eceae5;--bg3:#e4e1db;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);
+  --text:#1a1917;--text2:#5a5650;--text3:#9a9590;
+  --accent:#7a5c3a;
+  --stage-line1:rgba(0,0,0,0.03);
+  --stage-line3:rgba(122,92,58,0.12);
+  --stage-line7:rgba(0,0,0,0.04);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-m);font-size:15px;line-height:1.65;transition:background 0.2s,color 0.2s;}
+
+.stage-lines{position:fixed;top:0;left:0;right:0;height:3px;display:flex;gap:2px;z-index:100;pointer-events:none;}
+.stage-line{height:100%;flex:1;background:var(--stage-line1);}
+.stage-line:nth-child(3){flex:3;background:var(--stage-line3);}
+.stage-line:nth-child(7){flex:2;background:var(--stage-line7);}
+
+.page{max-width:720px;margin:0 auto;padding:48px 24px 80px;}
+
+.top-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:40px;}
+.logo-name{font-family:var(--font-d);font-size:13px;font-weight:300;font-style:italic;color:var(--text3);letter-spacing:0.02em;margin-bottom:16px;}
+.page-title{font-family:var(--font-d);font-size:28px;font-weight:300;font-style:italic;color:var(--text);margin-bottom:4px;}
+.page-subtitle{font-size:11px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;}
+
+.theme-toggle{display:flex;align-items:center;gap:8px;margin-top:4px;cursor:pointer;border:0.5px solid var(--border2);border-radius:20px;padding:5px 12px;background:transparent;color:var(--text3);font-family:var(--font-m);font-size:11px;letter-spacing:0.04em;transition:all 0.15s;white-space:nowrap;}
+.theme-toggle:hover{border-color:var(--text3);color:var(--text2);}
+
+.divider{height:0.5px;background:var(--border);margin:24px 0;}
+
+.status{font-size:12px;color:var(--text3);margin-bottom:24px;display:flex;align-items:center;gap:8px;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.status-dot.ok{background:#5DCAA5;}
+.status-dot.err{background:#E24B4A;}
+
+/* CALENDAR */
+.cal-section{margin-bottom:40px;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav-title{font-family:var(--font-d);font-size:18px;font-weight:300;font-style:italic;color:var(--text);}
+.cal-nav-btn{background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:14px;padding:4px 10px;transition:all 0.15s;font-family:var(--font-m);}
+.cal-nav-btn:hover{border-color:var(--text3);color:var(--text2);}
+
+.full-cal-grid{display:grid;grid-template-columns:28px repeat(7,1fr);gap:3px;}
+.full-cal-week{font-size:9px;color:var(--accent);text-align:center;padding:4px 2px;opacity:0.8;display:flex;align-items:center;justify-content:center;font-weight:500;}
+.full-cal-name{font-size:10px;color:var(--text3);text-align:center;padding:4px 0 8px;letter-spacing:0.06em;text-transform:uppercase;}
+.full-cal-cell{min-height:56px;background:var(--bg2);border:0.5px solid var(--border);border-radius:4px;padding:5px 6px;overflow:hidden;}
+.full-cal-cell.other-month{opacity:0.2;pointer-events:none;}
+.full-cal-cell.is-today{border-color:var(--accent);}
+.full-cal-cell.is-fridag{background:var(--bg);opacity:0.45;pointer-events:none;}
+.full-cal-cell.is-weekend{opacity:0.45;}
+.full-cal-date{font-size:10px;color:var(--text3);margin-bottom:3px;}
+.full-cal-cell.is-today .full-cal-date{color:var(--accent);font-weight:500;}
+.full-cal-chip{font-size:9px;padding:1px 4px;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;}
+.chip-avtale{background:rgba(175,169,236,0.18);color:#AFA9EC;}
+.chip-frist{background:rgba(226,75,74,0.15);color:#E24B4A;}
+
+/* LIST */
+.list-section-title{font-family:var(--font-d);font-size:18px;font-weight:300;font-style:italic;color:var(--text);margin-bottom:16px;}
+.day-group{margin-bottom:28px;}
+.cal-month-header{font-family:var(--font-d);font-size:16px;font-weight:300;font-style:italic;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+.day-line{flex:1;height:0.5px;background:var(--border);}
+.av-entry{border:0.5px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:6px;background:var(--bg2);display:flex;align-items:flex-start;gap:12px;transition:border-color 0.12s;}
+.av-entry:hover{border-color:var(--border2);}
+.av-entry-left{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;min-width:36px;}
+.av-entry-date{font-size:11px;color:var(--text3);white-space:nowrap;}
+.av-frist-dot{width:7px;height:7px;border-radius:50%;background:#E24B4A;margin-top:2px;}
+.av-avtale-dot{width:7px;height:7px;border-radius:50%;background:#AFA9EC;margin-top:2px;}
+.av-entry-body{flex:1;min-width:0;}
+.av-entry-title{font-size:13px;color:var(--text2);margin-bottom:2px;}
+.av-entry-note{font-size:11px;color:var(--text3);white-space:pre-wrap;}
+
+.legend{display:flex;gap:20px;margin-bottom:28px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);}
+.legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+.empty-state{padding:48px 0;text-align:center;color:var(--text3);font-style:italic;font-family:var(--font-d);font-size:15px;}
+.footer{margin-top:48px;padding-top:20px;border-top:0.5px solid var(--border);font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div class="stage-lines">
+  <div class="stage-line"></div><div class="stage-line"></div><div class="stage-line"></div>
+  <div class="stage-line"></div><div class="stage-line"></div><div class="stage-line"></div>
+  <div class="stage-line"></div><div class="stage-line"></div><div class="stage-line"></div>
+</div>
+
+<div class="page">
+  <div class="top-row">
+    <div>
+      <div class="logo-name">Dramafag — Vågen vgs</div>
+      <div class="page-title">Avtaler &amp; frister</div>
+      <div class="page-subtitle">Kommende</div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-label">Lys</span>
+    </button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="status" id="status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Laster...</span>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#AFA9EC;"></div> Avtale</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E24B4A;"></div> Frist</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8a7a6a;"></div> Fagdag</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5a5650;"></div> Fridag</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#EF9F27;"></div> Forestilling</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5DCAA5;"></div> Aktivitet</div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="cal-section">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+      <div class="cal-nav-title" id="cal-title">—</div>
+      <button class="cal-nav-btn" onclick="calNext()">›</button>
+    </div>
+    <div class="full-cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- LIST -->
+  <div class="list-section-title">Kommende</div>
+  <div id="content"></div>
+
+  <div class="footer">Oppdateres automatisk · kun lesetilgang</div>
+</div>
+
+<script>
+const API_URL = 'https://shiny-butterfly-00ec.vaagendrama.workers.dev';
+const MONTH_NAMES = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+const WDAY_NAMES  = ['søn','man','tir','ons','tor','fre','lør'];
+const DAY_LONG    = ['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+
+let calYear, calMonth;
+let allAvtaler = [];
+let allPublicEvents = [];
+
+const EVENT_LABELS = {fridag:'Fridag',ingen:'Fagdag',forestilling:'Forestilling',eksamen:'Eksamen',aktivitet:'Aktivitet',nb:'NB'};
+const EVENT_COLORS = {fridag:'#5a5650',ingen:'#8a7a6a',forestilling:'#EF9F27',eksamen:'#E24B4A',aktivitet:'#5DCAA5',nb:'#AFA9EC'};
+
+// Theme
+function applyTheme(light) {
+  document.body.classList.toggle('light', light);
+  document.getElementById('theme-icon').textContent  = light ? '🌙' : '☀️';
+  document.getElementById('theme-label').textContent = light ? 'Mørk' : 'Lys';
+  try { localStorage.setItem('frister_theme', light ? 'light' : 'dark'); } catch(e) {}
+}
+function toggleTheme() { applyTheme(!document.body.classList.contains('light')); }
+try { const t = localStorage.getItem('frister_theme'); applyTheme(t === null ? true : t === 'light'); } catch(e) { applyTheme(true); }
+
+// Helpers
+const todayStr = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+};
+const parseDate  = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const fmtDate    = s => { const d=parseDate(s); return `${WDAY_NAMES[d.getDay()]} ${d.getDate()}.`; };
+const fmtMonth   = s => { const d=parseDate(s); return `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`; };
+const isoFromYMD = (y,m,d) => y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function drawCalendar() {
+  document.getElementById('cal-title').textContent = MONTH_NAMES[calMonth] + ' ' + calYear;
+  const todayIso = todayStr();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const first = new Date(calYear, calMonth, 1);
+  let offset = first.getDay() - 1;
+  if (offset < 0) offset = 6;
+
+  let html = '<div class="full-cal-week"></div>' + DAY_LONG.map(d=>`<div class="full-cal-name">${d}</div>`).join('');
+
+  // Week number for first row
+  const firstRowMonday = new Date(calYear, calMonth, 1 - offset);
+  html += `<div class="full-cal-week">${getWeekNumber(firstRowMonday)}</div>`;
+  for (let i = 0; i < offset; i++) html += `<div class="full-cal-cell other-month"></div>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = isoFromYMD(calYear, calMonth, d);
+    const wday = new Date(calYear, calMonth, d).getDay();
+    const isWeekend = wday === 0 || wday === 6;
+    const isToday = iso === todayIso;
+
+    if (wday === 1 && d > 1) {
+      html += `<div class="full-cal-week">${getWeekNumber(new Date(calYear,calMonth,d))}</div>`;
+    }
+
+    const dayAvtaler = allAvtaler.filter(a => a.date === iso);
+    const dayPublic  = allPublicEvents.filter(e => e.date === iso);
+    const isFridag   = dayPublic.some(e => e.type === 'fridag');
+
+    let cls = 'full-cal-cell';
+    if (isToday) cls += ' is-today';
+    if (isFridag) cls += ' is-fridag';
+    else if (isWeekend && dayAvtaler.length === 0 && dayPublic.length === 0) cls += ' is-weekend';
+
+    let inner = `<div class="full-cal-date">${d}</div>`;
+    dayPublic.forEach(e => {
+      const col = EVENT_COLORS[e.type] || 'var(--text3)';
+      const lbl = e.title || EVENT_LABELS[e.type] || e.type;
+      inner += `<div class="full-cal-chip" style="background:${col}22;color:${col};">${lbl}</div>`;
+    });
+    dayAvtaler.forEach(a => {
+      const isFrist = a.subtype === 'frist';
+      inner += `<div class="full-cal-chip ${isFrist?'chip-frist':'chip-avtale'}">${a.title||'–'}</div>`;
+    });
+    html += `<div class="${cls}">${inner}</div>`;
+  }
+
+  const total = offset + daysInMonth;
+  const rem = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 0; i < rem; i++) html += `<div class="full-cal-cell other-month"></div>`;
+
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } drawCalendar(); }
+function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } drawCalendar(); }
+
+function setStatus(ok, text) {
+  document.getElementById('status-dot').className = 'status-dot ' + (ok ? 'ok' : 'err');
+  document.getElementById('status-text').textContent = text;
+}
+
+function renderList() {
+  const t = todayStr();
+  const all = [
+    ...allAvtaler,
+    ...allPublicEvents.filter(e => e.type !== 'nb')
+  ]
+    .filter(a => a.date >= t)
+    .sort((a,b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''));
+
+  const container = document.getElementById('content');
+  if (!all.length) { container.innerHTML = '<div class="empty-state">Ingen kommende avtaler eller frister.</div>'; return; }
+
+  const byMonth = {};
+  all.forEach(a => { const m=fmtMonth(a.date); if(!byMonth[m]) byMonth[m]=[]; byMonth[m].push(a); });
+
+  let html = '';
+  Object.keys(byMonth).forEach(month => {
+    html += `<div class="day-group"><div class="cal-month-header">${month}<div class="day-line"></div></div>`;
+    byMonth[month].forEach(a => {
+      const isAvtale = a.type === 'avtale';
+      const isFrist  = a.subtype === 'frist';
+      const col = isAvtale ? (isFrist ? '#E24B4A' : '#AFA9EC') : (EVENT_COLORS[a.type] || 'var(--text3)');
+      const lbl = isAvtale ? (a.title||'(uten tittel)') : (a.title || EVENT_LABELS[a.type] || a.type);
+      const tStr = a.time ? `<span style="font-size:11px;color:var(--text3);margin-left:6px;">${a.time}</span>` : '';
+      html += `
+        <div class="av-entry">
+          <div class="av-entry-left">
+            <div class="av-entry-date">${fmtDate(a.date)}</div>
+            <div style="width:7px;height:7px;border-radius:50%;background:${col};margin-top:2px;"></div>
+          </div>
+          <div class="av-entry-body">
+            <div class="av-entry-title">${lbl}${tStr}</div>
+            ${a.note?`<div class="av-entry-note">${a.note}</div>`:''}
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+async function load() {
+  try {
+    const payload = encodeURIComponent(JSON.stringify({action:'getAll', data:{}}));
+    const res = await fetch(API_URL + '?payload=' + payload);
+    const json = await res.json();
+    const all = json.ok ? json.data : null;
+    if (!all || !all.events) { setStatus(false, 'Kunne ikke laste data'); return; }
+
+    allAvtaler = all.events
+      .map(e => ({...e, date: String(e.date).substring(0,10)}))
+      .filter(a => a.type === 'avtale');
+
+    allPublicEvents = all.events
+      .map(e => ({...e, date: String(e.date).substring(0,10)}))
+      .filter(e => !e.private && e.private !== 'TRUE' && e.type !== 'avtale' && !(e.id||'').startsWith('av'));
+
+    const now = new Date();
+    setStatus(true, `Oppdatert kl. ${now.toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'})}`);
+    drawCalendar();
+    renderList();
+  } catch(err) {
+    setStatus(false, 'Tilkoblingsfeil');
+    console.error(err);
+  }
+}
+
+// Init
+const n = new Date();
+calYear = n.getFullYear();
+calMonth = n.getMonth();
+
+load();
+setInterval(load, 5 * 60 * 1000);
+</script>
+</body>
+</html>
